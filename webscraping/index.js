@@ -1,5 +1,6 @@
 import reddit from './redditScraper.js'
 import { sleep } from './sleep.js'
+import { writePostDataToCSV } from './csvWriter.js'
 
 
 
@@ -24,12 +25,13 @@ import { sleep } from './sleep.js'
 // grabScreenShotOfPage('askreddit');
 
 
-const goGetAuthors = async (subreddit) => {
+const scrapeAndWritePostToFile = async (subreddit) => {
   await reddit.init(subreddit)
+  console.log('HERE')
   let results = await reddit.getTopPosts(1)
   // sleep(300)
   // console.log(results)
-  const authors = await reddit.getTitleAndTopTenResponses(results.links[0])
-  console.log(authors)
+  const postData = await reddit.getPostData(results.links[0])
+  writePostDataToCSV(postData)
 }
-goGetAuthors('askreddit')
+scrapeAndWritePostToFile('askreddit')

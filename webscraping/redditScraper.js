@@ -1,5 +1,4 @@
 import puppeteer from 'puppeteer';
-import csv from 'csv-parser';
 
 const SUBREDDIT_URL = (subreddit) => `https://old.reddit.com/r/${subreddit}`;
 const self = {
@@ -8,12 +7,12 @@ const self = {
   init: async (subreddit) => {
     // console.log(init);
     self.browser = await puppeteer.launch({
-      headless: false
+      headless: true,
     });
     self.page = await self.browser.newPage();
 
     // go to the subreddit
-    await self.page.goto(SUBREDDIT_URL(subreddit, { waitUntil: 'networkidle0' }));
+    await self.page.goto(SUBREDDIT_URL(subreddit + "/top", { waitUntil: 'networkidle0' }));
   },
   getTopPosts: async (numResults) => {
     
@@ -37,36 +36,61 @@ const self = {
   goto: async (href) => {
     await self.page.goto(href, { waitUntil: 'networkidle0'});
   },
-  screenshotQuestion: async (index, postObject) => {
-    await self.page.goto(postObject.links[index], { waitUntil: 'networkidle0'})
-    await self.page.screenshot({path: 'newestVideo/page-screenshot.png'})
-  },
 
-  getTitleAndTopTenResponses: async (href) => {
-    await self.goto(href)
+  getPostData: async (href) => {
+    console.log(href)
+    await self.goto(href + "?sort=top")
     // this grabs top level comments
+    /*
+      TODO: add functionality for grabbing the comment beneath if it is too short. 
+      TODO: this can be done by checking length of the comment, if its too short, add the child, and so on down the line.
+    */
     const topComments = await self.page.$$('.commentarea > .sitetable > div[class*="thing"]')
 
+    const titleDiv = await self.page.waitForSelector('p[class*="title"]')
+    const title = await self.page.evaluate(el => el.textContent, titleDiv)
+    const authorA = await self.page.waitForSelector('a[class*="author"]')
+    const OP = await self.page.evaluate(el => el.textContent, authorA)
+    const commentDiv = await self.page.waitForSelector('a[class*="comments"]')
+    const commentCount = await self.page.evaluate(el => el.textContent, commentDiv)
+    const karmaDiv = await self.page.waitForSelector('div[class*="score"]')
+    const karmaCount = await self.page.evaluate(el => el.textContent, karmaDiv)
 
-    const authors = await Promise.all(topComments.slice(0,1).map(async (el) => {
-      return el.$eval(('a[class*="author"'), node => {
+
+    // scrape all the data
+    const authors = await Promise.all(topComments.slice(0,20).map(async (el) => {
+      return el.$eval(('a[class*="author"]'), node => {
         const text = node.innerText.trim()
         return text;
       })
     }))
 
-    console.log(authors)
-    
+    const topCommentBodies = await Promise.all(topComments.slice(0,20).map(async (el) => {
+      return el.$eval('div[class*="md"]', node => {
+        let text = node.innerText.trim()
+        text = text.replace(/(\r\n|\n|\r)/gm, "");
+        return text
+      })
+    }))
 
-    // fields for CSV file
-    // comment :string representing the comment
-    // score: score
-    // author: author of the parent comment
-    // child1: string the comment
-    //
+    const karma = await Promise.all(topComments.slice(0,20).map(async (el) => {
+      return el.$eval('span[class*="score"]', node => {
+        let text = node.innerText.trim()
+        return text
+      })
+    }))
 
-    return authors
+    const data = {
+      authors,
+      topCommentBodies,
+      karmaArray: karma,
+      title,
+      originalPoster: OP,
+      commentCount,
+      originalKarma: karmaCount,
+    }
 
+    return data
   }
 };
 
