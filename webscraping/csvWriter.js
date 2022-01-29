@@ -54,6 +54,10 @@ const parseIncomingData = (postDataObject) => {
 }
 
 export const writePostDataToCSV = (postData) => {
+    // TODO
+    /*
+        TODO: at some point down the road, Either put this in an s3 bucket, or write it to a database.
+    */
     const parsedData = parseIncomingData(postData);
     postWriter
         .writeRecords(parsedData.postData)
