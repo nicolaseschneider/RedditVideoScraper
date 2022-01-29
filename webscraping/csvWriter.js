@@ -1,7 +1,7 @@
 import { createObjectCsvWriter }from 'csv-writer';
 
 const commentWriter = createObjectCsvWriter({
-    path: 'commentData.csv',
+    path: '../videoCreation/commentData.csv',
     header: [
         {id: 'commentId', title: 'CommentID'},
         {id: 'authorName', title: 'AuthorName'},
@@ -10,7 +10,7 @@ const commentWriter = createObjectCsvWriter({
     ]
 });
 const postWriter = createObjectCsvWriter({
-    path: 'postData.csv',
+    path: '../videoCreation/postData.csv',
     header: [
         {id: 'authorName', title: 'AuthorName'},
         {id: 'karma', title: 'Karma'},
@@ -55,7 +55,6 @@ const parseIncomingData = (postDataObject) => {
 
 export const writePostDataToCSV = (postData) => {
     const parsedData = parseIncomingData(postData);
-    console.log(parsedData.postData)
     postWriter
         .writeRecords(parsedData.postData)
         .then(() => {
