@@ -1,5 +1,5 @@
 import reddit from './redditScraper.js'
-import { sleep } from './sleep.js'
+// import { sleep } from './sleep.js'
 import { writePostDataToCSV } from './csvWriter.js'
 
 
